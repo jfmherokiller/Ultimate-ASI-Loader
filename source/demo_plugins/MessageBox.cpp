@@ -1,10 +1,27 @@
 #include <windows.h>
-
-BOOL WINAPI DllMain(HINSTANCE hInst, DWORD reason, LPVOID)
+#pragma unmanaged
+extern int __stdcall Initialize(void* param);
+extern void __stdcall Shutdown();
+DWORD WINAPI thread(LPVOID)
 {
-	if (reason == DLL_PROCESS_ATTACH)
+	char* testing = "aaa";
+	Initialize(testing);
+	while (true)
 	{
-		MessageBox(0, TEXT("ASI Loader works correctly."), TEXT("ASI Loader Test Plugin"), MB_ICONWARNING);
+		
+	}
+}
+BOOL WINAPI DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpvReservedD)
+{
+	if (fdwReason == DLL_PROCESS_ATTACH)
+	{
+		DisableThreadLibraryCalls(hModule);
+
+		CreateThread(nullptr, 0, LPTHREAD_START_ROUTINE(&thread), nullptr, 0, nullptr);
+	}
+	if(fdwReason == DLL_PROCESS_DETACH)
+	{
+		Shutdown();
 	}
 	return TRUE;
 }

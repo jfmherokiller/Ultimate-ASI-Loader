@@ -22,7 +22,7 @@ bool iequals(std::wstring_view s1, std::wstring_view s2)
 std::wstring to_wstring(std::string_view cstr)
 {
     std::string str(std::move(cstr));
-    auto charsReturned = MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), NULL, 0);
+    auto charsReturned = MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), nullptr, 0);
     std::wstring wstrTo(charsReturned, 0);
     MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), &wstrTo[0], charsReturned);
     return wstrTo;
@@ -87,7 +87,7 @@ template<typename T, typename... Args>
 void GetSections(T&& h, Args... args)
 {
     const std::set< std::string_view, std::less<> > s = { args... };
-    size_t dwLoadOffset = (size_t)GetModuleHandle(NULL);
+    size_t dwLoadOffset = (size_t)GetModuleHandle(nullptr);
     BYTE* pImageBase = reinterpret_cast<BYTE *>(dwLoadOffset);
     PIMAGE_DOS_HEADER   pDosHeader = reinterpret_cast<PIMAGE_DOS_HEADER>(dwLoadOffset);
     PIMAGE_NT_HEADERS   pNtHeader = reinterpret_cast<PIMAGE_NT_HEADERS>(pImageBase + pDosHeader->e_lfanew);
@@ -303,7 +303,7 @@ void LoadOriginalLibrary()
     }
     else
     {
-        MessageBox(0, TEXT("This library isn't supported. Try to rename it to dsound.dll, dinput8.dll, wininet.dll or version.dll."), TEXT("ASI Loader"), MB_ICONERROR);
+        MessageBox(nullptr, TEXT("This library isn't supported. Try to rename it to dsound.dll, dinput8.dll, wininet.dll or version.dll."), TEXT("ASI Loader"), MB_ICONERROR);
         ExitProcess(0);
     }
 #endif
@@ -344,12 +344,30 @@ void Direct3D8DisableMaximizedWindowedModeShim()
     }
 }
 #endif
+//Returns the last Win32 error, in string format. Returns an empty string if there is no error.
+std::wstring GetLastErrorAsString(DWORD errorE)
+{
+    //Get the error message, if any.
+    const auto errorMessageID = errorE;
+    if (errorMessageID == 0)
+        return std::wstring(); //No error message has been recorded
 
+    LPWSTR messageBuffer = nullptr;
+    const size_t size = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                                       nullptr, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), reinterpret_cast<LPWSTR>(&messageBuffer), 0, nullptr);
+
+    std::wstring message(messageBuffer, size);
+
+    //Free the buffer.
+    LocalFree(messageBuffer);
+
+    return message;
+}
 void FindFiles(WIN32_FIND_DATAW* fd)
 {
     auto dir = GetCurrentDirectoryW();
 
-    HANDLE asiFile = FindFirstFileW(L"*.asi", fd);
+    auto asiFile = FindFirstFileW(L"*.asi", fd);
     if (asiFile != INVALID_HANDLE_VALUE)
     {
         do {
@@ -364,25 +382,25 @@ void FindFiles(WIN32_FIND_DATAW* fd)
                 {
                     auto path = dir + L'\\' + fd->cFileName;
 
-                    if (GetModuleHandle(path.c_str()) == NULL)
+                    if (GetModuleHandle(path.c_str()) == nullptr)
                     {
-                        auto h = LoadLibraryW(path);
+	                    const auto h = LoadLibraryW(path);
                         SetCurrentDirectoryW(dir.c_str()); //in case asi switched it
 
-                        if (h == NULL)
+                        if (h == nullptr)
                         {
-                            auto e = GetLastError();
+	                        const auto e = GetLastError();
                             if (e != ERROR_DLL_INIT_FAILED) // in case dllmain returns false
                             {
-                                std::wstring msg = L"Unable to load " + std::wstring(fd->cFileName) + L". Error: " + std::to_wstring(e);
-                                MessageBoxW(0, msg.c_str(), L"ASI Loader", MB_ICONERROR);
+	                            auto msg = L"Unable to load " + std::wstring(fd->cFileName) + L". Error: " + GetLastErrorAsString(e);
+                                MessageBoxW(nullptr, msg.c_str(), L"ASI Loader", MB_ICONERROR);
                             }
                         }
                         else
                         {
-                            auto procedure = (void(*)())GetProcAddress(h, "InitializeASI");
+                            auto procedure = reinterpret_cast<void(*)()>(GetProcAddress(h, "InitializeASI"));
 
-                            if (procedure != NULL)
+                            if (procedure != nullptr)
                             {
                                 procedure();
                             }
@@ -630,7 +648,7 @@ DEFINE_GUID(CLSID_WinInet, 0xC39EE728, 0xD419, 0x4BD4, 0xA3, 0xEF, 0xED, 0xA0, 0
 HRESULT WINAPI CustomCoCreateInstance(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsContext, REFIID riid, LPVOID *ppv)
 {
     HRESULT hr = REGDB_E_KEYMISSING;
-    HMODULE hDll = NULL;
+    HMODULE hDll = nullptr;
 
     if (rclsid == CLSID_DirectInput8)
         hDll = ::LoadLibrary(L"dinput8.dll");
@@ -639,13 +657,13 @@ HRESULT WINAPI CustomCoCreateInstance(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWOR
     else if (rclsid == CLSID_WinInet)
         hDll = ::LoadLibrary(L"wininet.dll");
 
-    if (hDll == NULL)
+    if (hDll == nullptr)
         return ::CoCreateInstance(rclsid, pUnkOuter, dwClsContext, riid, ppv);
 
     typedef HRESULT(__stdcall *pDllGetClassObject)(IN REFCLSID rclsid, IN REFIID riid, OUT LPVOID FAR* ppv);
 
     pDllGetClassObject GetClassObject = (pDllGetClassObject)::GetProcAddress(hDll, "DllGetClassObject");
-    if (GetClassObject == NULL)
+    if (GetClassObject == nullptr)
     {
         ::FreeLibrary(hDll);
         return hr;
@@ -856,7 +874,7 @@ bool HookKernel32IAT(HMODULE mod, bool exe)
     static auto getSection = [](const PIMAGE_NT_HEADERS nt_headers, unsigned section) -> PIMAGE_SECTION_HEADER
     {
         return reinterpret_cast<PIMAGE_SECTION_HEADER>(
-            (UCHAR*)nt_headers->OptionalHeader.DataDirectory +
+            reinterpret_cast<UCHAR*>(nt_headers->OptionalHeader.DataDirectory) +
             nt_headers->OptionalHeader.NumberOfRvaAndSizes * sizeof(IMAGE_DATA_DIRECTORY) +
             section * sizeof(IMAGE_SECTION_HEADER));
     };
@@ -876,9 +894,9 @@ bool HookKernel32IAT(HMODULE mod, bool exe)
     {
         if ((size_t)(hExecutableInstance + (pImports + i)->Name) < hExecutableInstance_end)
         {
-            if (!_stricmp((const char*)(hExecutableInstance + (pImports + i)->Name), "KERNEL32.DLL"))
+            if (!_stricmp(reinterpret_cast<const char*>(hExecutableInstance + (pImports + i)->Name), "KERNEL32.DLL"))
                 PatchIAT(hExecutableInstance + (pImports + i)->FirstThunk, 0, hExecutableInstance_end);
-            else if (!_stricmp((const char*)(hExecutableInstance + (pImports + i)->Name), "OLE32.DLL"))
+            else if (!_stricmp(reinterpret_cast<const char*>(hExecutableInstance + (pImports + i)->Name), "OLE32.DLL"))
                 PatchCoCreateInstance(hExecutableInstance + (pImports + i)->FirstThunk, 0, hExecutableInstance_end);
         }
     }
@@ -1000,7 +1018,7 @@ LONG WINAPI CustomUnhandledExceptionFilter(LPEXCEPTION_POINTERS ExceptionInfo)
     HWND		hWnd;
 
     wchar_t* modulenameptr;
-    if (GetModuleFileNameW(GetModuleHandle(NULL), modulename, _countof(modulename)) != 0)
+    if (GetModuleFileNameW(GetModuleHandle(nullptr), modulename, _countof(modulename)) != 0)
     {
         modulenameptr = wcsrchr(modulename, '\\');
         *modulenameptr = L'\0';
@@ -1016,7 +1034,7 @@ LONG WINAPI CustomUnhandledExceptionFilter(LPEXCEPTION_POINTERS ExceptionInfo)
     wcsftime(timestamp, _countof(timestamp), L"%Y%m%d%H%M%S", &ltime);
     swprintf_s(filename, L"%s\\%s\\%s.%s.dmp", modulename, L"CrashDumps", modulenameptr, timestamp);
 
-    hFile = CreateFileW(filename, GENERIC_WRITE, FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    hFile = CreateFileW(filename, GENERIC_WRITE, FILE_SHARE_WRITE, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
 
     if (hFile != INVALID_HANDLE_VALUE)
     {
@@ -1036,21 +1054,21 @@ LONG WINAPI CustomUnhandledExceptionFilter(LPEXCEPTION_POINTERS ExceptionInfo)
     // step 2: write log
     // Logs exception into buffer and writes to file
     swprintf_s(filename, L"%s\\%s\\%s.%s.log", modulename, L"CrashDumps", modulenameptr, timestamp);
-    hFile = CreateFileW(filename, GENERIC_WRITE, FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    hFile = CreateFileW(filename, GENERIC_WRITE, FILE_SHARE_WRITE, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
 
     if (hFile != INVALID_HANDLE_VALUE)
     {
         auto Log = [ExceptionInfo, hFile](char* buffer, size_t size, bool reg, bool stack, bool trace)
         {
-            if (LogException(buffer, size, (LPEXCEPTION_POINTERS)ExceptionInfo, reg, stack, trace))
+            if (LogException(buffer, size, static_cast<LPEXCEPTION_POINTERS>(ExceptionInfo), reg, stack, trace))
             {
                 DWORD NumberOfBytesWritten = 0;
-                WriteFile(hFile, buffer, strlen(buffer), &NumberOfBytesWritten, NULL);
+                WriteFile(hFile, buffer, strlen(buffer), &NumberOfBytesWritten, nullptr);
             }
         };
 
         // Try to make a very descriptive exception, for that we need to malloc a huge buffer...
-        if (auto buffer = (char*)malloc(max_logsize_ever))
+        if (auto buffer = static_cast<char*>(malloc(max_logsize_ever)))
         {
             Log(buffer, max_logsize_ever, true, true, true);
             free(buffer);
@@ -1070,7 +1088,7 @@ LONG WINAPI CustomUnhandledExceptionFilter(LPEXCEPTION_POINTERS ExceptionInfo)
 
     // step 3: exit the application
     ShowCursor(TRUE);
-    hWnd = FindWindowW(0, L"");
+    hWnd = FindWindowW(nullptr, L"");
     SetForegroundWindow(hWnd);
 
     return EXCEPTION_CONTINUE_SEARCH;
@@ -1094,7 +1112,7 @@ void Init()
 
     if (!nDisableCrashDumps)
     {
-        std::wstring m = GetModuleFileNameW(NULL);
+        std::wstring m = GetModuleFileNameW(nullptr);
         m = m.substr(0, m.find_last_of(L"/\\") + 1) + L"CrashDumps";
 
         auto FolderExists = [](LPCWSTR szPath) -> BOOL
@@ -1121,7 +1139,7 @@ void Init()
 
     if (nForceEPHook != FALSE || nDontLoadFromDllMain != FALSE)
     {
-        HMODULE mainModule = GetModuleHandle(NULL);
+        HMODULE mainModule = GetModuleHandle(nullptr);
         bool hookedSuccessfully = HookKernel32IAT(mainModule, true);
         if (!hookedSuccessfully)
         {
