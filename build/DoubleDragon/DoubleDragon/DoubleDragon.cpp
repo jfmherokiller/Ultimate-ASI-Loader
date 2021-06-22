@@ -55,6 +55,7 @@ DWORD WINAPI thread(LPVOID)
 	
 	//writeLog("Please Press Ok Only when At Menu");
 	Sleep(10000);
+	//MessageBoxA(nullptr, "Press Ok At Main Menu", "", 0);
 	//Beep(523,500);
 	myLoadfile(FindNeededDLL());
 	MemoryLoadLibrary(externBuffer.data(), externBuffer.size());

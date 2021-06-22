@@ -87,6 +87,7 @@
     <TargetName>DOUBLEDRAGON</TargetName>
     <LinkIncremental>false</LinkIncremental>
     <TargetExt>.asi</TargetExt>
+    <IntDir>DoubleDragon\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

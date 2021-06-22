@@ -8,11 +8,11 @@
 using namespace System;
 using namespace Reflection;
 
-[assembly:AssemblyTitle("Community Script Hook V .NET")] ;
-[assembly:AssemblyDescription("An ASI plugin for Grand Theft Auto V, which allows running scripts written in any .NET language in-game.")] ;
-[assembly:AssemblyCompany("crosire & contributors")] ;
-[assembly:AssemblyProduct("ScriptHookVDotNet")] ;
-[assembly:AssemblyCopyright("Copyright © 2015 crosire")] ;
+[assembly:AssemblyTitle("")] ;
+[assembly:AssemblyDescription("My Own C# ASI LOADWE")] ;
+[assembly:AssemblyCompany("")] ;
+[assembly:AssemblyProduct("")] ;
+[assembly:AssemblyCopyright("")] ;
 [assembly:AssemblyVersion("3.0.0")] ;
 [assembly:AssemblyFileVersion("3.0.0")] ;
 // Sign with a strong name to distinguish from older versions and cause .NET framework runtime to bind the correct assemblies

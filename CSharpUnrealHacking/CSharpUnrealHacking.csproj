@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{22ED5F99-3642-4E91-8D78-EF8E2E4F392C}</ProjectGuid>
+    <ProjectGuid>{BA9324DD-ED76-4CE7-9594-EE0B4A096A45}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>TestingThingy2</RootNamespace>
-    <AssemblyName>TestingThingy2</AssemblyName>
+    <RootNamespace>CSharpUnrealHacking</RootNamespace>
+    <AssemblyName>CSharpUnrealHacking</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
@@ -17,22 +17,22 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\..\x64\Release\</OutputPath>
+    <OutputPath>..\build\x64\Release\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Release\TestingThingy2.xml</DocumentationFile>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\..\x64\Release\</OutputPath>
+    <OutputPath>..\build\x64\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <PlatformTarget>x64</PlatformTarget>
-    <DocumentationFile>bin\Release\TestingThingy2.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -47,10 +47,20 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Class1.cs" />
+    <Compile Include="GameMemoryFuckery\NameStore.cs" />
+    <Compile Include="GameMemoryFuckery\ObjectStore.cs" />
+    <Compile Include="GameMemoryFuckery\SigScanningBits.cs" />
+    <Compile Include="GameMemoryFuckery\SigScanSharp.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
+    <Folder Include="GameMemoryFuckery\Win32Messy\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\NativeManager\NativeManager.csproj">
+      <Project>{ba5721ba-7ffb-47c9-a8e1-50455af3a4ac}</Project>
+      <Name>NativeManager</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

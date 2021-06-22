@@ -1,9 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+
+
 namespace TestingThingy2
 {
     /// <summary>
@@ -11,12 +17,32 @@ namespace TestingThingy2
     /// </summary>
     public class Program
     {
-        /// <summary>
-        /// 
-        /// </summary>
+        static MethodInfo LoadPlugInFromFile(string fileName)
+        {
+            var asm = Assembly.LoadFrom(fileName);
+            var type = asm.GetType("Plugin");
+            if (type == null)
+            {
+                return null;
+            }
+            return type.GetRuntimeMethods().FirstOrDefault(Method => Method.Name == "PluginStartMethod");
+        }
         public static void Main()
         {
-            Tetris.Program.Main();
+            var PluginsDirectory = Path.Combine(new[]{
+                Directory.GetCurrentDirectory(),
+                "plugins",
+                "csharp"
+            });
+            var plugins = Directory.GetFiles(PluginsDirectory, "*.dll");
+            foreach (var plugin in plugins)
+            {
+                var plugIn = LoadPlugInFromFile(plugin);
+                if (plugIn != null)
+                {
+                    plugIn.Invoke(null, null);
+                }
+            }
         }
     }
 }
